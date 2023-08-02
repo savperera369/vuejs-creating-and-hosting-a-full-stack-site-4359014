@@ -19,7 +19,7 @@ async function start () {
 
   app.get('/products', async (req,res) => {
     const products = await db.collection('products').find({}).toArray();
-    res.send(products);
+    res.json(products);
   });
 
   app.get('/users/:userId/cart', async (req,res) => {
