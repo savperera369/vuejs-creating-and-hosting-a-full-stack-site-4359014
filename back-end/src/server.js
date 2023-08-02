@@ -1,10 +1,5 @@
 import express from 'express';
 import {MongoClient} from 'mongodb';
-import {cartItems as cartItemsRaw, products as productsRaw} from './temp-data';
-// cant directly modify cartItems and products since they live in another file
-// rename and use lets to work around this
-let cartItems = cartItemsRaw;
-let products = productsRaw;
 
 // pass url of mongo database you want to connect to
 async function start () {
@@ -46,19 +41,24 @@ async function start () {
     const productId = req.body.id;
 
     await db.collection('users').updateOne({id: userId}, {
-      $addToSet: {cartItems: productId}
+      $addToSet: {cartItems: productId},
     })
     
-    const user = await db.collection('users').findOne({id: req.params.userId});
+    const user = await db.collection('users').findOne({id: userId});
     // use map function to map an id to a item
     const populatedCart = await populateCardIds(user.cartItems);
     res.json(populatedCart);
   });
 
-  app.delete('/cart/:productId', (req,res) => {
-    const productId = req.body.id;
-    cartItems = cartItems.filter(id => id !== productId);
-    const populatedCart = populateCardIds(cartItems);
+  app.delete('/users/:userId/cart/:productId', async (req,res) => {
+    const userId = req.params.userId;
+    const productId = req.params.productId;
+    await db.collection('users').updateOne({id:userId}, {
+      $pull: {cartItems: productId},
+    })
+    const user = await db.collection('users').findOne({id: userId});
+    // use map function to map an id to a item
+    const populatedCart = await populateCardIds(user.cartItems);
     res.json(populatedCart);
   });
 
